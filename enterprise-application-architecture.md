@@ -180,9 +180,135 @@
 
   A very visible aspect of the object-relational mismatch is the fact that relational databases don’t support inheritance. You want database structures that map clearly to the objects and allow links anywhere in the inheritance structure. Class Table Inheritance supports this by using one database table per class in the inheritance structure.
 
+- Concrete Table Inheritance
+
+  Represents an inheritance hierarchy of classes with one table per concrete class in the hierarchy.
+
+  ![concrete table inheritance](https://learning.oreilly.com/library/view/patterns-of-enterprise/0321127420/graphics/12fig09a.jpg)
+
+  As any object purist will tell you, relational databases don’t support inheritance—a fact that complicates object-relational mapping. Thinking of tables from an object instance point of view, a sensible route is to take each object in memory and map it to a single database row. This implies Concrete Table Inheritance, where there’s a table for each concrete class in the inheritance hierarchy.
+
+  I’ll confess to having had some difficulty naming this pattern. Most people think of it as leaf oriented since you usually have one table per leaf class in a hierarchy. Following that logic, I could call this pattern leaf table inheritance, and the term “leaf” is often used for this pattern. Strictly, however, a concrete class that isn’t a leaf usually gets a table as well, so I decided to go with the more correct, if less intuitive term.
+
+- Inheritance Mappers
+
+  A structure to organize database mappers that handle inheritance hierarchies.
+
+  ![inheritance mappers](https://learning.oreilly.com/library/view/patterns-of-enterprise/0321127420/graphics/12fig11a.jpg)
+
+  When you map from an object-oriented inheritance hierarchy in memory to a relational database you have to minimize the amount of code needed to save and load the data to the database. You also want to provide both abstract and concrete mapping behavior that allows you to save or load a superclass or a subclass.
+
+  Although the details of this behavior vary with your inheritance mapping scheme (Single Table Inheritance, Class Table Inheritance, and Concrete Table Inheritance) the general structure works the same for all of them.
+
 ## OBJECT RELATIONAL METADATA MAPPING PATTERNS 
 
+- Metadata Mapping
+
+  Holds details of object-relational mapping in metadata.
+
+  ![metadata mapping](https://learning.oreilly.com/library/view/patterns-of-enterprise/0321127420/graphics/13fig01a.jpg)
+
+  Much of the code that deals with object-relational mapping describes how fields in the database correspond to fields in in-memory objects. The resulting code tends to be tedious and repetitive to write. A Metadata Mapping allows developers to define the mappings in a simple tabular form, which can then be processed by generic code to carry out the details of reading, inserting, and updating the data.
+
+- Query Object
+
+  An object that represents a database query.
+
+  ![query object](https://learning.oreilly.com/library/view/patterns-of-enterprise/0321127420/graphics/13fig01b.jpg)
+
+  SQL can be an involved language, and many developers aren’t particularly familiar with it. Furthermore, you need to know what the database schema looks like to form queries. You can avoid this by creating specialized finder methods that hide the SQL inside parameterized methods, but that makes it difficult to form more ad hoc queries. It also leads to duplication in the SQL statements should the database schema change.
+
+  A Query Object is an interpreter [Gang of Four], that is, a structure of objects that can form itself into a SQL query. You can create this query by referring to classes and fields rather than tables and columns. In this way those who write the queries can do so independently of the database schema and changes to the schema can be localized in a single place.
+
+- Repository
+
+  Mediates between the domain and data mapping layers using a collection-like interface for accessing domain objects.
+
+  ![repository](https://learning.oreilly.com/library/view/patterns-of-enterprise/0321127420/graphics/13fig01c.jpg)
+
+  A system with a complex domain model often benefits from a layer, such as the one provided by Data Mapper, that isolates domain objects from details of the database access code. In such systems it can be worthwhile to build another layer of abstraction over the mapping layer where query construction code is concentrated. This becomes more important when there are a large number of domain classes or heavy querying. In these cases particularly, adding this layer helps minimize duplicate query logic.
+
+  A Repository mediates between the domain and data mapping layers, acting like an in-memory domain object collection. Client objects construct query specifications declaratively and submit them to Repository for satisfaction. Objects can be added to and removed from the Repository, as they can from a simple collection of objects, and the mapping code encapsulated by the Repository will carry out the appropriate operations behind the scenes. Conceptually, a Repository encapsulates the set of objects persisted in a data store and the operations performed over them, providing a more object-oriented view of the persistence layer. Repository also supports the objective of achieving a clean separation and one-way dependency between the domain and data mapping layers.
+
 ## WEB PRESENTATION PATTERNS 
+
+- Model View Controller
+
+  Splits user interface interaction into three distinct roles.
+
+  ![model view controller](https://learning.oreilly.com/library/view/patterns-of-enterprise/0321127420/graphics/330fig01.jpg)
+
+  MVC considers three roles. The model is an object that represents some information about the domain. It’s a nonvisual object containing all the data and behavior other than that used for the UI. In its most pure OO form the model is an object within a Domain Model (116). You might also think of a Transaction Script as the model providing that it contains no UI machinery. Such a definition stretches the notion of model, but fits the role breakdown of MVC.
+
+  The view represents the display of the model in the UI. Thus, if our model is a customer object our view might be a frame full of UI widgets or an HTML page rendered with information from the model. The view is only about display of information; any changes to the information are handled by the third member of the MVC trinity: the controller. The controller takes user input, manipulates the model, and causes the view to update appropriately. In this way UI is a combination of the view and the controller.
+
+- Page Controller
+
+  An object that handles a request for a specific page or action on a Web site.
+
+  ![page controller](https://learning.oreilly.com/library/view/patterns-of-enterprise/0321127420/graphics/14fig01b.jpg)
+
+  Most people’s basic Web experience is with static HTML pages. When you request static HTML you pass to the Web server the name and path for a HTML document stored on it. The key notion is that each page on the Web site is a separate document on the server. With dynamic pages things can get much more interesting since there’s a much more complex relationship between path names and the file that responds. However, the approach of one path leading to one file that handles the request is a simple model to understand.
+
+  As a result, Page Controller has one input controller for each logical page of the Web site. That controller may be the page itself, as it often is in server page environments, or it may be a separate object that corresponds to that page.
+
+  The basic idea behind a Page Controller is to have one module on the Web server act as the controller for each page on the Web site. In practice, it doesn’t work out to exactly one module per page, since you may hit a link sometimes and get a different page depending on dynamic information. More strictly, the controllers tie in to each action, which may be clicking a link or a button.
+
+- Front Controller
+
+  A controller that handles all requests for a Web site.
+
+  ![front controller](https://learning.oreilly.com/library/view/patterns-of-enterprise/0321127420/graphics/14fig01a.jpg)
+
+  In a complex Web site there are many similar things you need to do when handling a request. These things include security, internationalization, and providing particular views for certain users. If the input controller behavior is scattered across multiple objects, much of this behavior can end up duplicated. Also, it’s difficult to change behavior at runtime.
+
+  The Front Controller consolidates all request handling by channeling requests through a single handler object. This object can carry out common behavior, which can be modified at runtime with decorators. The handler then dispatches to command objects for behavior particular to a request.
+
+  A Front Controller handles all calls for a Web site, and is usually structured in two parts: a Web handler and a command hierarchy. The Web handler is the object that actually receives post or get requests from the Web server. It pulls just enough information from the URL and the request to decide what kind of action to initiate and then delegates to a command to carry out the action
+
+- Template View 
+
+  Renders information into HTML by embedding markers in an HTML page.
+
+  ![template view](https://learning.oreilly.com/library/view/patterns-of-enterprise/0321127420/graphics/14fig03a.jpg)
+
+  Writing a program that spits out HTML is often more difficult than you might imagine. Although programming languages are better at creating text than they used to be (some of us remember character handling in Fortran and standard Pascal), creating and concatenating string constructs is still painful. If there isn’t much to do, it isn’t too bad, but a whole HTML page is a lot of text manipulation.
+
+  The best way to work is to compose the dynamic Web page as you do a static page but put in markers that can be resolved into calls to gather dynamic information. Since the static part of the page acts as a template for the particular response, I call this a Template View.
+
+  One of the most popular forms of Template View is a server page such as ASP, JSP, or PHP. These actually go a step further than the basic form of a Template View in that they allow you to embed arbitrary programming logic, referred to as scriptlets, into the page. In my view, however, this feature is actually a big problem and you’re better off limiting yourself to basic Template View behavior when you use server page technology.
+
+- Transform View
+
+  A view that processes domain data element by element and transforms it into HTML.
+
+  ![transform view](https://learning.oreilly.com/library/view/patterns-of-enterprise/0321127420/graphics/14fig03b.jpg)
+
+  When you issue requests for data to the domain and data source layers, you get back all the data you need to satisfy them, but without the formatting you need to make a proper Web page. The role of the view in Model View Controller is to render this data into a Web page. Using Transform View means thinking of this as a transformation where you have the model’s data as input and its HTML as output.
+
+  The basic notion of Transform View is writing a program that looks at domain-oriented data and converts it to HTML. The program walks the structure of the domain data and, as it recognizes each form of domain data, it writes out the particular piece of HTML for it. If you think about this in an imperative way, you might have a method called renderCustomer that takes a customer object and renders it into HTML. If the customer contains a lot of orders, this method loops over the orders calling renderOrder.
+
+- Two Step Views
+
+  Turns domain data into HTML in two steps: first by forming some kind of logical page, then rendering the logical page into HTML.
+
+  ![two step view](https://learning.oreilly.com/library/view/patterns-of-enterprise/0321127420/graphics/14fig03c.jpg)
+
+  If you have a Web application with many pages, you often want a consistent look and organization to the site. If every page looks different, you end up with a site that users find confusing. You may also want to make global changes to the appearance of the site easily, but common approaches using Template View (350) or Transform View (361) make this difficult because presentation decisions are often duplicated across multiple pages or transform modules. A global change can force you to change several files.
+
+  Two Step View deals with this problem by splitting the transformation into two stages. The first transforms the model data into a logical presentation without any specific formatting; the second converts that logical presentation with the actual formatting needed. This way you can make a global change by altering the second stage, or you can support multiple output looks and feels with one second stage each.
+
+- Application Controller
+
+  A centralized point for handling screen navigation and the flow of an application.
+
+  ![application controller](https://learning.oreilly.com/library/view/patterns-of-enterprise/0321127420/graphics/14fig09a.jpg)
+
+  Some applications contain a significant amount of logic about the screens to use at different points, which may involve invoking certain screens at certain times in an application. This is the wizard style of interaction, where the user is led through a series of screens in a certain order. In other cases we may see screens that are only brought in under certain conditions, or choices between different screens that depend on earlier input.
+
+  To some degree the various Model View Controller input controllers can make some of these decisions, but as an application gets more complex this can lead to duplicated code as several controllers for different screens need to know what to do in a certain situation.
+
+  You can remove this duplication by placing all the flow logic in an Application Controller. Input controllers then ask the Application Controller for the appropriate commands for execution against a model and the correct view to use depending on the application context.
 
 ## DISTRIBUTION PATTERNS 
 
